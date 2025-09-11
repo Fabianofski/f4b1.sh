@@ -1,0 +1,48 @@
+Booting f4b1.dev Terminal...
+Initializing kernel... [OK]
+Loading user modules... [OK]
+Checking system integrity... [OK]
+Mounting /home/f4b1... [OK]
+Starting network services... [OK]
+
+Welcome to f4b1.dev
+====================
+
+[ SYSTEM STATUS ]
+CPU: ██████░░░░░ 60%
+RAM: █████████░░ 80%
+DISK: ███████░░░ 70%
+NET: Connected
+
+Launching interactive terminal...
+
+
+
+ @@@@@         @       @@@@        
+ @@@         @@@@@      @@@        
+ @         @@@@@@@@@      @        
+          @@@@@@ @@@@@                                                                                         
+        @@@@@@     @@@@           .o88o.       .o    .o8         .o            .o8                             
+      @@@@@@@@@         @@        888 `"     .d88   "888       o888           "888                             
+    @@@@@@   @@@@     @@@@@      o888oo    .d'888    888oooo.   888       .oooo888   .ooooo.  oooo    ooo      
+  @@@@@@   @@  @@   @@@@@@        888    .d'  888    d88' `88b  888      d88' `888  d88' `88b  `88.  .8'       
+ @@@@@     @@@@@  @@@@@@          888    88ooo888oo  888   888  888      888   888  888ooo888   `88..8'        
+   @@        @@@@@@@@@@           888         888    888   888  888  .o. 888   888  888    .o    `888'         
+      @@@      @@@@@@            o888o       o888o   `Y8bod8P' o888o Y8P `Y8bod88P" `Y8bod8P'     `8'          
+       @@@@  @@@@@@                
+ @      @@@@@@@@@         @        
+ @@@      @@@@@         @@@        
+ @@@@@      @         @@@@@        
+
+GitHub: https://github.com/Fabianofski
+Itch.io: https://f4b1.itch.io/
+Website: f4b1.dev
+
+Type 'help' for commands
+
+Login: guest
+
+Login successful
+
+$ guest@f4b1.dev >
+

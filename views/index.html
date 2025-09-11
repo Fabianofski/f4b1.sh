@@ -6,9 +6,41 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title></title>
         <link href="css/style.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js" integrity="sha384-ZBXiYtYQ6hJ2Y0ZNoYuI+Nq5MqWBr+chMrS/RkXpNzQCApHEhOt2aY8EJgqwHLkJ" crossorigin="anonymous"></script>
+        <style>
+            @font-face {
+                font-family: 'FiraCode';
+                src: url('/static/fonts/FiraMonoNerdFont-Regular.otf') format('otf');
+                font-weight: normal;
+                font-style: normal;
+            }
+
+            body {
+                font-family: 'FiraCode', monospace;
+            }
+        </style>
     </head>
     <body>
-        {{ .Count }} 
+        <div id="terminal">
+            <p style="white-space: pre; line-height: 18px">{{ .StdOut }}</p>
+        </div>
+        
+        <form 
+            hx-post="/submit" 
+            hx-target="#terminal" 
+        >
+            <input 
+                name="stdin"
+                type="text" 
+                hx-post="/input" 
+                hx-trigger="input changed" 
+                hx-target="#terminal"
+            >
+        </form>
     </body>
 </html>
+{{ end }}
+
+{{ block "terminal" . }}
+<p style="white-space: pre">{{ .StdOut }}</p>
 {{ end }}
