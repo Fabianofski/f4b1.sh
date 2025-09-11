@@ -17,6 +17,14 @@ body {
     color: #cdd6f4;
 }
 
+a, a:visited {
+    color: #cdd6f4;
+}
+
+a:hover, a:active {
+    color: #dee7f5;
+}
+
 .terminal-container {
     display: flex;
     align-items: center;

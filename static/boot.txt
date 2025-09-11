@@ -34,9 +34,9 @@ Launching interactive terminal...
  @@@      @@@@@         @@@        
  @@@@@      @         @@@@@        
 
-GitHub: https://github.com/Fabianofski
-Itch.io: https://f4b1.itch.io/
-Website: f4b1.dev
+GitHub: <a target="_blank" rel="noopener noreferrer" href="https://github.com/Fabianofski">https://github.com/Fabianofski</a> 
+Itch.io: <a target="_blank" rel="noopener noreferrer" href="https://f4b1.itch.io/">https://f4b1.itch.io/</a>
+Website: <a target="_blank" rel="noopener noreferrer" href="https://f4b1.dev">f4b1.dev</a>
 
 Type 'help' for commands
 
