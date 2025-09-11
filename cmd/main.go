@@ -1,13 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"io"
 	"log"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"golang.org/x/net/websocket"
 )
 
 type Templates struct {
@@ -24,17 +28,7 @@ func newTemplate() *Templates {
 	}
 }
 
-type Count struct {
-	Count int
-}
-
-type Terminal struct {
-	StdOut string
-	StdErr string
-	StdIn  string
-}
-
-func readBootText() string {
+func readBootText() []string {
 	file, err := os.Open("static/boot.txt")
 	if err != nil {
 		log.Fatal(err)
@@ -47,34 +41,47 @@ func readBootText() string {
 	}()
 
 	b, err := io.ReadAll(file)
-	return string(b)
+	return strings.Split(string(b), "\n")
+}
+
+func handleTerminal(c echo.Context) error {
+	websocket.Handler(func(ws *websocket.Conn) {
+		log.Println("Connected!!")
+		defer ws.Close()
+		count := 0
+		bootText := readBootText()
+		for {
+			err := websocket.Message.Send(ws, fmt.Sprintf("<div id='terminal' hx-swap-oob='beforeend'>%s\n</div>", bootText[count]))
+			if err != nil {
+				c.Logger().Error(err)
+			}
+			time.Sleep(30 * time.Millisecond)
+			count++
+
+			if count >= len(bootText) {
+				break
+			}
+		}
+	}).ServeHTTP(c.Response(), c.Request())
+	return nil
 }
 
 func main() {
 	e := echo.New()
+
 	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
 	e.Renderer = newTemplate()
 
 	e.Static("/static", "static")
+	e.Static("/css", "css")
 
-	terminal := Terminal{StdOut: "", StdErr: "", StdIn: ""}
 	e.GET("/", func(c echo.Context) error {
-		terminal.StdOut = readBootText()
-		return c.Render(200, "index", terminal)
+		return c.Render(200, "index", nil)
 	})
 
-	e.POST("/input", func(c echo.Context) error {
-		terminal.StdIn = c.FormValue("stdin")
-		return c.Render(200, "terminal", terminal)
-	})
-
-	e.POST("/submit", func(c echo.Context) error {
-		log.Println("Submit")
-		terminal.StdOut += "\n" + terminal.StdIn
-		terminal.StdIn = ""
-		return c.Render(200, "terminal", terminal)
-	})
+	e.GET("/terminal-output", handleTerminal)
 
 	e.Logger.Fatal(e.Start(":4000"))
 }
