@@ -1,3 +1,14 @@
+:root {
+    --bg-body: #1e1e2f;
+    --text-body: #cdd6f4;
+    --link: #cdd6f4;
+    --link-hover: #dee7f5;
+
+    --terminal-bg: #313244;
+    --terminal-text: #f5e0dc;
+    --terminal-shadow: rgba(0, 0, 0, 0.5);
+}
+
 @font-face {
     font-family: 'FiraCode';
     src: url('/static/fonts/FiraMonoNerdFont-Regular.otf') format('opentype');
@@ -5,24 +16,29 @@
     font-style: normal;
 }
 
-body {
+* {
+    padding: 0;
     margin: 0;
     font-family: 'FiraCode', monospace;
+}
+
+body {
+    margin: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
     min-width: 100vw;
-    background: #1e1e2f;
-    color: #cdd6f4;
+    background: var(--bg-body);
+    color: var(--text-body);
 }
 
 a, a:visited {
-    color: #cdd6f4;
+    color: var(--link);
 }
 
 a:hover, a:active {
-    color: #dee7f5;
+    color: var(--link-hover);
 }
 
 .terminal-container {
@@ -34,13 +50,41 @@ a:hover, a:active {
 }
 
 #terminal {
+    display: flex; 
+    flex-direction: column; 
+    gap: .3rem;
+
     width: 100%;
     height: 100%;
+    overflow-y: auto;
     padding: 1rem;
     border-radius: 1rem;
+    background: var(--terminal-bg);
+    color: var(--terminal-text);
+    box-shadow: 0 0 20px var(--terminal-shadow);
+}
+
+.terminal-line{
     white-space: pre;
-    overflow-y: auto;
-    background: #313244;
-    color: #f5e0dc;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.std-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.std-input label {
+    font-weight: bold;
+    user-select: none;
+}
+
+.std-input input {
+    flex: 1;
+    background: transparent;
+    color: var(--terminal-text);
+    font-size: 1rem;
+    border: none;
+    outline: none;
 }

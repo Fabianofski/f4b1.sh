@@ -44,5 +44,3 @@ Login: guest
 
 Login successful
 
-$ guest@f4b1.dev >
-

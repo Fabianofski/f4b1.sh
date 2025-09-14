@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"html/template"
 	"io"
 	"log"
@@ -22,13 +22,30 @@ func (t *Templates) Render(w io.Writer, name string, data any, c echo.Context) e
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
+func (t *Templates) RenderToString(name string, data any) (string, error) {
+	var buf strings.Builder
+	if err := t.templates.ExecuteTemplate(&buf, name, data); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
 func newTemplate() *Templates {
 	return &Templates{
 		templates: template.Must(template.ParseGlob("views/*.html")),
 	}
 }
 
-func readBootText() []string {
+type TerminalSession struct {
+	StdOut       []template.HTML
+	InputAllowed bool
+}
+
+type Message struct {
+	Input string
+}
+
+func readBootText() []template.HTML {
 	file, err := os.Open("static/boot.txt")
 	if err != nil {
 		log.Fatal(err)
@@ -41,26 +58,79 @@ func readBootText() []string {
 	}()
 
 	b, err := io.ReadAll(file)
-	return strings.Split(string(b), "\n")
+	htmlLines := []template.HTML{}
+	for _, v := range strings.Split(string(b), "\n") {
+		htmlLines = append(htmlLines, template.HTML(v))
+	}
+	return htmlLines
 }
 
-func handleTerminal(c echo.Context) error {
-	websocket.Handler(func(ws *websocket.Conn) {
-		log.Println("Connected!!")
-		defer ws.Close()
-		count := 0
-		bootText := readBootText()
-		for {
-			err := websocket.Message.Send(ws, fmt.Sprintf("<div id='terminal' hx-swap-oob='beforeend'>%s\n</div>", bootText[count]))
-			if err != nil {
-				c.Logger().Error(err)
-			}
-			time.Sleep(30 * time.Millisecond)
-			count++
+func SendTerminalSession(ws *websocket.Conn, templates *Templates, session *TerminalSession) error {
+	html, err := templates.RenderToString("terminal-line", session)
+	if err != nil {
+		return err
+	}
+	err = websocket.Message.Send(ws, html)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
-			if count >= len(bootText) {
-				break
+func SendBootText(ws *websocket.Conn, templates *Templates, session *TerminalSession) error {
+	count := 0
+	bootText := readBootText()
+	for {
+		session.StdOut = bootText[:count]
+		err := SendTerminalSession(ws, templates, session)
+		if err != nil {
+			return err
+		}
+		time.Sleep(30 * time.Millisecond)
+		count++
+		if count >= len(bootText) {
+			break
+		}
+	}
+	return nil
+}
+
+func handleTerminal(c echo.Context, templates *Templates) error {
+	websocket.Handler(func(ws *websocket.Conn) {
+		defer ws.Close()
+		session := &TerminalSession{}
+
+		err := SendBootText(ws, templates, session)
+		if err != nil {
+			c.Logger().Error(err)
+		}
+
+		session.InputAllowed = true
+		err = SendTerminalSession(ws, templates, session)
+		if err != nil {
+			c.Logger().Error(err)
+		}
+
+		for {
+			var msg string
+			err = websocket.Message.Receive(ws, &msg)
+			if err != nil {
+				if err.Error() == "EOF" {
+					c.Logger().Info("WebSocket closed by server")
+					break
+				}
+				c.Logger().Error(err)
+				continue
 			}
+
+			var m Message
+			if err := json.Unmarshal([]byte(msg), &m); err != nil {
+				c.Logger().Error(err)
+				continue
+			}
+			log.Printf("%s\n", m.Input)
+			session.StdOut = append(session.StdOut, template.HTML("$ guest@f4b1.dev > "+m.Input))
+			SendTerminalSession(ws, templates, session)
 		}
 	}).ServeHTTP(c.Response(), c.Request())
 	return nil
@@ -72,7 +142,8 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.Renderer = newTemplate()
+	templates := newTemplate()
+	e.Renderer = templates
 
 	e.Static("/static", "static")
 	e.Static("/css", "css")
@@ -81,7 +152,9 @@ func main() {
 		return c.Render(200, "index", nil)
 	})
 
-	e.GET("/terminal-output", handleTerminal)
+	e.GET("/terminal-output", func(c echo.Context) error {
+		return handleTerminal(c, templates)
+	})
 
 	e.Logger.Fatal(e.Start(":4000"))
 }

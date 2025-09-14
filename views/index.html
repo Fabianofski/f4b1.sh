@@ -17,3 +17,23 @@
     </body>
 </html>
 {{ end }}
+
+{{ block "terminal-line" . }} 
+<div id="terminal" hx-swap-oob="innerhtml">
+    {{ range .StdOut }}
+    <p class="terminal-line">{{.}}</p>
+    {{ end }}
+    {{ if .InputAllowed }}
+    <form class="std-input" ws-send="">
+        <label for="input">$ guest@f4b1.dev ></label>
+        <input 
+            type="text" 
+            name="input" 
+            autocomplete="off"
+            ws-trigger="input changed"
+            autofocus
+        >
+    </form>
+    {{ end }}
+</div>
+{{ end }}
