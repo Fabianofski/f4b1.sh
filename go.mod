@@ -1,4 +1,4 @@
-module f4b1.dev/terminal
+module github.com/Fabianofski/f4b1.sh
 
 go 1.23.2
 
@@ -11,7 +11,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/net v0.33.0 // direct
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.8.0 // indirect

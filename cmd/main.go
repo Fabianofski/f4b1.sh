@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Fabianofski/f4b1.sh/lib"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/net/websocket"
@@ -36,11 +37,6 @@ func newTemplate() *Templates {
 	}
 }
 
-type TerminalSession struct {
-	StdOut       []template.HTML
-	InputAllowed bool
-}
-
 type Message struct {
 	Input string
 }
@@ -65,7 +61,7 @@ func readBootText() []template.HTML {
 	return htmlLines
 }
 
-func SendTerminalSession(ws *websocket.Conn, templates *Templates, session *TerminalSession) error {
+func SendTerminalSession(ws *websocket.Conn, templates *Templates, session *lib.TerminalSession) error {
 	html, err := templates.RenderToString("terminal-line", session)
 	if err != nil {
 		return err
@@ -77,7 +73,7 @@ func SendTerminalSession(ws *websocket.Conn, templates *Templates, session *Term
 	return nil
 }
 
-func SendBootText(ws *websocket.Conn, templates *Templates, session *TerminalSession) error {
+func SendBootText(ws *websocket.Conn, templates *Templates, session *lib.TerminalSession) error {
 	count := 0
 	bootText := readBootText()
 	for {
@@ -98,7 +94,7 @@ func SendBootText(ws *websocket.Conn, templates *Templates, session *TerminalSes
 func handleTerminal(c echo.Context, templates *Templates) error {
 	websocket.Handler(func(ws *websocket.Conn) {
 		defer ws.Close()
-		session := &TerminalSession{}
+		session := &lib.TerminalSession{}
 
 		err := SendBootText(ws, templates, session)
 		if err != nil {
@@ -129,7 +125,7 @@ func handleTerminal(c echo.Context, templates *Templates) error {
 				continue
 			}
 			log.Printf("%s\n", m.Input)
-			session.StdOut = append(session.StdOut, template.HTML("$ guest@f4b1.dev > "+m.Input))
+			lib.ParseCommand(m.Input, session)
 			SendTerminalSession(ws, templates, session)
 		}
 	}).ServeHTTP(c.Response(), c.Request())
