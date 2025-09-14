@@ -15,6 +15,17 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+var fileTree = []string{
+	"/home/",
+	"/home/guest/",
+	"/home/guest/blog/",
+	"/home/guest/blog/hello-world",
+	"/home/guest/about-me",
+	"/home/guest/games/",
+	"/home/guest/games/blown-away",
+	"/home/guest/games/tobor",
+}
+
 type Templates struct {
 	templates *template.Template
 }
@@ -94,7 +105,10 @@ func SendBootText(ws *websocket.Conn, templates *Templates, session *lib.Termina
 func handleTerminal(c echo.Context, templates *Templates) error {
 	websocket.Handler(func(ws *websocket.Conn) {
 		defer ws.Close()
-		session := &lib.TerminalSession{}
+		session := &lib.TerminalSession{
+			Cwd:      "/home/guest/",
+			FileTree: fileTree,
+		}
 
 		err := SendBootText(ws, templates, session)
 		if err != nil {
