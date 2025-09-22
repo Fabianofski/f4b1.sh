@@ -1,18 +1,12 @@
 package lib
 
 import (
+	"github.com/Fabianofski/f4b1.sh/model"
 	"html/template"
 	"strings"
 )
 
-type TerminalSession struct {
-	StdOut       []template.HTML
-	InputAllowed bool
-	Cwd          string
-	FileTree     []string
-}
-
-func ParseCommand(input string, session *TerminalSession) error {
+func ParseCommand(input string, session *model.TerminalSession) error {
 	cmd := strings.Split(input, " ")
 	args := cmd[1:]
 	session.StdOut = append(session.StdOut, template.HTML("$ guest@f4b1.dev > "+input))
@@ -23,6 +17,8 @@ func ParseCommand(input string, session *TerminalSession) error {
 		clear(session)
 	case "ls":
 		ls(args, session)
+	case "":
+		return nil
 	default:
 		out := template.HTML("[f4b1.sh] command not found " + cmd[0])
 		session.StdOut = append(session.StdOut, out)

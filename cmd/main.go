@@ -10,47 +10,11 @@ import (
 	"time"
 
 	"github.com/Fabianofski/f4b1.sh/lib"
+	"github.com/Fabianofski/f4b1.sh/model"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/net/websocket"
 )
-
-var fileTree = []string{
-	"/home/",
-	"/home/guest/",
-	"/home/guest/blog/",
-	"/home/guest/blog/hello-world",
-	"/home/guest/about-me",
-	"/home/guest/games/",
-	"/home/guest/games/blown-away",
-	"/home/guest/games/tobor",
-}
-
-type Templates struct {
-	templates *template.Template
-}
-
-func (t *Templates) Render(w io.Writer, name string, data any, c echo.Context) error {
-	return t.templates.ExecuteTemplate(w, name, data)
-}
-
-func (t *Templates) RenderToString(name string, data any) (string, error) {
-	var buf strings.Builder
-	if err := t.templates.ExecuteTemplate(&buf, name, data); err != nil {
-		return "", err
-	}
-	return buf.String(), nil
-}
-
-func newTemplate() *Templates {
-	return &Templates{
-		templates: template.Must(template.ParseGlob("views/*.html")),
-	}
-}
-
-type Message struct {
-	Input string
-}
 
 func readBootText() []template.HTML {
 	file, err := os.Open("static/boot.txt")
@@ -72,19 +36,7 @@ func readBootText() []template.HTML {
 	return htmlLines
 }
 
-func SendTerminalSession(ws *websocket.Conn, templates *Templates, session *lib.TerminalSession) error {
-	html, err := templates.RenderToString("terminal-line", session)
-	if err != nil {
-		return err
-	}
-	err = websocket.Message.Send(ws, html)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func SendBootText(ws *websocket.Conn, templates *Templates, session *lib.TerminalSession) error {
+func SendBootText(ws *websocket.Conn, templates *model.Templates, session *model.TerminalSession) error {
 	count := 0
 	bootText := readBootText()
 	for {
@@ -102,12 +54,24 @@ func SendBootText(ws *websocket.Conn, templates *Templates, session *lib.Termina
 	return nil
 }
 
-func handleTerminal(c echo.Context, templates *Templates) error {
+func SendTerminalSession(ws *websocket.Conn, templates *model.Templates, session *model.TerminalSession) error {
+	html, err := templates.RenderToString("terminal-line", session)
+	if err != nil {
+		return err
+	}
+	err = websocket.Message.Send(ws, html)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func handleTerminal(c echo.Context, templates *model.Templates) error {
 	websocket.Handler(func(ws *websocket.Conn) {
 		defer ws.Close()
-		session := &lib.TerminalSession{
-			Cwd:      "/home/guest/",
-			FileTree: fileTree,
+		session := &model.TerminalSession{
+			Cwd:  "/home/guest/",
+			Root: map[string]model.Directory{},
 		}
 
 		err := SendBootText(ws, templates, session)
@@ -133,7 +97,7 @@ func handleTerminal(c echo.Context, templates *Templates) error {
 				continue
 			}
 
-			var m Message
+			var m model.Message
 			if err := json.Unmarshal([]byte(msg), &m); err != nil {
 				c.Logger().Error(err)
 				continue
@@ -152,7 +116,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	templates := newTemplate()
+	templates := model.NewTemplate()
 	e.Renderer = templates
 
 	e.Static("/static", "static")

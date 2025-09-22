@@ -1,27 +1,22 @@
 package lib
 
 import (
+	"github.com/Fabianofski/f4b1.sh/model"
 	"html/template"
 	"strings"
 )
 
-func getFilesInDirectory(path string, session *TerminalSession) []string {
-	files := []string{}
-	for _, v := range session.FileTree {
-		relativeFile, ok := strings.CutPrefix(v, path)
-		if ok {
-			relativeFileTrimmed := strings.TrimSuffix(relativeFile, "/")
-			pathParts := strings.Split(relativeFileTrimmed, "/")
-			if relativeFile == "" || len(pathParts) > 1 {
-				continue
-			}
-			files = append(files, relativeFile)
-		}
+func getFilesInDirectory(path string, session *model.TerminalSession) []string {
+	dir := session.Root[path]
+
+	keys := make([]string, 0, len(dir.Files))
+	for k := range dir.Files {
+		keys = append(keys, k)
 	}
-	return files
+	return keys
 }
 
-func ls(args []string, session *TerminalSession) error {
+func ls(args []string, session *model.TerminalSession) error {
 	files := []string{}
 	if len(args) == 0 {
 		files = getFilesInDirectory(session.Cwd, session)
