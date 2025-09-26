@@ -8,37 +8,50 @@ import (
 )
 
 func pathToAbsolutePath(path string, session *model.TerminalSession) string {
-	absPath := ""
+	absPath := path
 
-	if strings.HasPrefix(path, ".") {
-		absPath = strings.Replace(path, ".", session.Cwd, 1)
-		return absPath
+	if strings.HasPrefix(absPath, "..") {
+		parts := strings.Split(session.Cwd, "/")
+		absPath = strings.Join(parts[:len(parts)-2], "/") + "/"
 	}
 
-	if !strings.HasPrefix(path, "/") {
-		absPath = session.Cwd + path
-	} else {
-		absPath = path
+	if strings.HasPrefix(absPath, ".") {
+		cwd := strings.TrimSuffix(session.Cwd, "/")
+		absPath = strings.Replace(absPath, ".", cwd, 1)
 	}
 
-	if strings.HasPrefix(path, "~") {
-		absPath = strings.Replace(path, "~", "/home/guest", 1)
+	if strings.HasPrefix(absPath, "~") {
+		absPath = strings.Replace(absPath, "~", session.HomeDir, 1)
+	}
+
+	if !strings.HasPrefix(absPath, "/") {
+		absPath = session.Cwd + absPath
 	}
 
 	if !strings.HasSuffix(absPath, "/") {
 		absPath += "/"
 	}
-	fmt.Println(absPath)
 	return absPath
 }
 
 func getFilesInDirectory(path string, session *model.TerminalSession) []string {
-	dir, ok := session.Root[path]
+	absPath := pathToAbsolutePath(path, session)
+
+	dir, ok := session.Root[absPath]
 	if !ok {
 		return []string{fmt.Sprintf("ls: cannot access %s: No such file or directory", path)}
 	}
 
-	keys := make([]string, 0, len(dir.Files))
+	keys := []string{}
+	for k := range session.Root {
+		if trimmed, ok := strings.CutPrefix(k, absPath); ok {
+			parts := strings.Split(trimmed, "/")
+			if len(parts) == 2 {
+				keys = append(keys, parts[len(parts)-2])
+			}
+		}
+	}
+
 	for k := range dir.Files {
 		keys = append(keys, k)
 	}
@@ -50,8 +63,7 @@ func ls(args []string, session *model.TerminalSession) error {
 	if len(args) == 0 {
 		files = getFilesInDirectory(session.Cwd, session)
 	} else {
-		path := pathToAbsolutePath(args[0], session)
-		files = getFilesInDirectory(path, session)
+		files = getFilesInDirectory(args[0], session)
 	}
 	out := template.HTML(strings.Join(files, ", "))
 	session.StdOut = append(session.StdOut, out)

@@ -19,6 +19,10 @@ func ParseCommand(input string, session *model.TerminalSession) error {
 		ls(args, session)
 	case "cat":
 		cat(args, session)
+	case "cd":
+		cd(args, session)
+	case "pwd":
+		pwd(session)
 	case "":
 		return nil
 	default:
