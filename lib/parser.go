@@ -7,7 +7,7 @@ import (
 )
 
 func ParseCommand(input string, session *model.TerminalSession) error {
-	cmd := strings.Split(input, " ")
+	cmd := strings.Split(strings.Trim(input, " "), " ")
 	args := cmd[1:]
 	session.StdOut = append(session.StdOut, template.HTML("$ guest@f4b1.dev > "+input))
 	switch cmd[0] {
@@ -17,6 +17,8 @@ func ParseCommand(input string, session *model.TerminalSession) error {
 		clear(session)
 	case "ls":
 		ls(args, session)
+	case "cat":
+		cat(args, session)
 	case "":
 		return nil
 	default:

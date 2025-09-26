@@ -71,7 +71,7 @@ func handleTerminal(c echo.Context, templates *model.Templates) error {
 		defer ws.Close()
 		session := &model.TerminalSession{
 			Cwd:  "/home/guest/",
-			Root: map[string]model.Directory{},
+			Root: DefaultFileTree,
 		}
 
 		err := SendBootText(ws, templates, session)

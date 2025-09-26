@@ -5,6 +5,5 @@ type File struct {
 }
 
 type Directory struct {
-	Path  string
 	Files map[string]File
 }
