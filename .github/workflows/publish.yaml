@@ -1,0 +1,57 @@
+name: publish
+
+on:
+  workflow_dispatch:
+  push:
+    tags: 
+      - '**'
+
+env:
+  REGISTRY: docker.io
+  REGISTRY_USER: f4b1dev
+  IMAGE_NAME: f4b1dev/f4b1.sh 
+
+jobs:
+  publish:
+    name: publish image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: login
+        run: |
+          echo ${{ secrets.REGISTRY_PASSWORD }} | docker login ${{ env.REGISTRY }} -u ${{ env.REGISTRY_USER }} --password-stdin
+
+      - name: Build and Publish
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          docker build . \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$VERSION \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$VERSION
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  deploy:
+    needs: publish
+    name: deploy image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: install ssh keys
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
+
+      - name: connect and deploy
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            docker stop f4b1.sh || true && \
+            docker rm f4b1.sh || true && \
+            docker image prune -af && \
+            docker run -d --name f4b1.sh -p 4000:4000 ${{ env.IMAGE_NAME }}:latest
+          "
+
+      - name: cleanup
+        run: rm -rf ~/.ssh
