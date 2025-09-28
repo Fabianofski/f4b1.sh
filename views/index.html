@@ -1,38 +1,37 @@
 {{ block "index" . }}
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>f4b1.sh</title>
-        <link href="css/style.css" rel="stylesheet">
-        <link rel="icon" type="image/png" href="/static/favicon.png">
-        <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js" integrity="sha384-ZBXiYtYQ6hJ2Y0ZNoYuI+Nq5MqWBr+chMrS/RkXpNzQCApHEhOt2aY8EJgqwHLkJ" crossorigin="anonymous"></script>
-        <script src="https://cdn.jsdelivr.net/npm/htmx-ext-ws@2.0.2" crossorigin="anonymous"></script>
-    </head>
-    <body hx-ext="ws">
-        <div class="terminal-container">
-            <div id="terminal" ws-connect="/terminal-output" ></div>
-        </div>
-    </body>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>f4b1.sh</title>
+    <link href="css/style.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js"
+        integrity="sha384-ZBXiYtYQ6hJ2Y0ZNoYuI+Nq5MqWBr+chMrS/RkXpNzQCApHEhOt2aY8EJgqwHLkJ"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx-ext-ws@2.0.2" crossorigin="anonymous"></script>
+</head>
+
+<body hx-ext="ws">
+    <div class="terminal-container">
+        <div id="terminal" ws-connect="/terminal-output"></div>
+    </div>
+</body>
+
 </html>
 {{ end }}
 
-{{ block "terminal-line" . }} 
+{{ block "terminal-line" . }}
 <div id="terminal" hx-swap-oob="innerhtml">
     {{ range .StdOut }}
     <p class="terminal-line">{{.}}</p>
     {{ end }}
     {{ if .InputAllowed }}
     <form class="std-input" ws-send="">
-        <label for="input">$ guest@f4b1.dev ></label>
-        <input 
-            type="text" 
-            name="input" 
-            autocomplete="off"
-            ws-trigger="input changed"
-            autofocus
-        >
+        <label for="input">$ {{.CwdShort}} guest@f4b1.dev ></label>
+        <input type="text" name="input" autocomplete="off" ws-trigger="input changed" autofocus>
     </form>
     {{ end }}
 </div>

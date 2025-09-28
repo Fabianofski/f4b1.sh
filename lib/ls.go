@@ -34,7 +34,7 @@ func pathToAbsolutePath(path string, session *model.TerminalSession) string {
 	return absPath
 }
 
-func getFilesInDirectory(path string, session *model.TerminalSession) []string {
+func getFilesInDirectory(path string, session *model.TerminalSession, showHidden bool) []string {
 	absPath := pathToAbsolutePath(path, session)
 
 	dir, ok := session.Root[absPath]
@@ -53,19 +53,37 @@ func getFilesInDirectory(path string, session *model.TerminalSession) []string {
 	}
 
 	for k := range dir.Files {
-		keys = append(keys, k)
+		if !strings.HasPrefix(k, ".") || showHidden {
+			keys = append(keys, k)
+		}
 	}
 	return keys
 }
 
 func ls(args []string, session *model.TerminalSession) error {
 	files := []string{}
-	if len(args) == 0 {
-		files = getFilesInDirectory(session.Cwd, session)
-	} else {
-		files = getFilesInDirectory(args[0], session)
+	showHidden := false
+
+	dirs := []string{}
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "-") {
+			if arg == "-a" {
+				showHidden = true
+			}
+		} else {
+			dirs = append(dirs, arg)
+		}
 	}
-	out := template.HTML(strings.Join(files, ", "))
-	session.StdOut = append(session.StdOut, out)
+
+	if len(dirs) == 0 {
+		files = getFilesInDirectory(session.Cwd, session, showHidden)
+	} else {
+		for _, v := range dirs {
+			files = getFilesInDirectory(v, session, showHidden)
+		}
+	}
+
+	out := strings.Join(files, " ")
+	session.StdOut = append(session.StdOut, template.HTML(out))
 	return nil
 }

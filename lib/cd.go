@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Fabianofski/f4b1.sh/model"
 	"html/template"
+	"strings"
 )
 
 func cd(args []string, session *model.TerminalSession) error {
@@ -16,6 +17,7 @@ func cd(args []string, session *model.TerminalSession) error {
 
 		if ok {
 			session.Cwd = absPath
+			session.CwdShort = strings.Replace(absPath, session.HomeDir, "~", 1)
 		} else {
 			errorMsg := fmt.Sprintf("cd: cannot access %s: No such file or directory", path)
 			session.StdOut = append(session.StdOut, template.HTML(errorMsg))

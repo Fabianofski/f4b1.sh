@@ -70,9 +70,10 @@ func handleTerminal(c echo.Context, templates *model.Templates) error {
 	websocket.Handler(func(ws *websocket.Conn) {
 		defer ws.Close()
 		session := &model.TerminalSession{
-			Cwd:     "/home/guest/",
-			HomeDir: "/home/guest/",
-			Root:    DefaultFileTree,
+			Cwd:      "/home/guest/",
+			CwdShort: "~",
+			HomeDir:  "/home/guest/",
+			Root:     DefaultFileTree,
 		}
 
 		err := SendBootText(ws, templates, session)
