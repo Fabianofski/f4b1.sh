@@ -9,6 +9,7 @@ type TerminalSession struct {
 	CwdShort     string
 	HomeDir      string
 	Root         map[string]Directory
+	Id           string
 }
 
 type Message struct {

@@ -5,12 +5,14 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/Fabianofski/f4b1.sh/lib"
 	"github.com/Fabianofski/f4b1.sh/model"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/net/websocket"
@@ -63,26 +65,56 @@ func SendTerminalSession(ws *websocket.Conn, templates *model.Templates, session
 	if err != nil {
 		return err
 	}
+	sessions[session.Id] = session
 	return nil
 }
 
-func handleTerminal(c echo.Context, templates *model.Templates) error {
+var sessions = map[string]*model.TerminalSession{}
+
+func readSessionCookie(c echo.Context) *model.TerminalSession {
+	cookie, err := c.Cookie("sessionId")
+
+	if err == nil && cookie != nil {
+		sessionId := cookie.Value
+		if session, ok := sessions[sessionId]; ok {
+			log.Println("Found Session!")
+			return session
+		}
+	}
+	return nil
+}
+
+func createSessionIfNotExists(c echo.Context) {
+	if readSessionCookie(c) != nil {
+		return
+	}
+	session := &model.TerminalSession{
+		Cwd:      "/home/guest/",
+		HomeDir:  "/home/guest/",
+		CwdShort: "~",
+		Root:     DefaultFileTree,
+		Id:       uuid.New().String(),
+	}
+
+	cookie := new(http.Cookie)
+	cookie.Name = "sessionId"
+	cookie.Value = session.Id
+	c.SetCookie(cookie)
+	sessions[session.Id] = session
+}
+
+func handleTerminal(c echo.Context, templates *model.Templates, session *model.TerminalSession) error {
 	websocket.Handler(func(ws *websocket.Conn) {
 		defer ws.Close()
-		session := &model.TerminalSession{
-			Cwd:      "/home/guest/",
-			CwdShort: "~",
-			HomeDir:  "/home/guest/",
-			Root:     DefaultFileTree,
-		}
 
-		err := SendBootText(ws, templates, session)
-		if err != nil {
-			c.Logger().Error(err)
+		if !session.InputAllowed {
+			err := SendBootText(ws, templates, session)
+			if err != nil {
+				c.Logger().Error(err)
+			}
+			session.InputAllowed = true
 		}
-
-		session.InputAllowed = true
-		err = SendTerminalSession(ws, templates, session)
+		err := SendTerminalSession(ws, templates, session)
 		if err != nil {
 			c.Logger().Error(err)
 		}
@@ -125,11 +157,13 @@ func main() {
 	e.Static("/css", "css")
 
 	e.GET("/", func(c echo.Context) error {
+		createSessionIfNotExists(c)
 		return c.Render(200, "index", nil)
 	})
 
 	e.GET("/terminal-output", func(c echo.Context) error {
-		return handleTerminal(c, templates)
+		session := readSessionCookie(c)
+		return handleTerminal(c, templates, session)
 	})
 
 	e.Logger.Fatal(e.Start(":4000"))
